@@ -1,0 +1,69 @@
+package com.example.appbanhang.adapter;
+
+import android.content.Context;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.ViewGroup;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.appbanhang.databinding.IttemDonhangBinding;
+import com.example.appbanhang.model.HistoryResponse;
+import com.example.appbanhang.model.Item;
+
+import java.util.List;
+
+public class DonHangAdapter extends RecyclerView.Adapter<DonHangAdapter.DonHangViewHolder>{
+    private Context context;
+    private List<HistoryResponse> lstDonHang;
+    ChiTietAdapter adapter;
+    private RecyclerView.RecycledViewPool viewPool = new RecyclerView.RecycledViewPool();
+
+    public DonHangAdapter(Context context) {
+        this.context = context;
+    }
+    public void setData(List<HistoryResponse> lstDonHang){
+        this.lstDonHang = lstDonHang;
+        notifyDataSetChanged();
+    }
+    @NonNull
+    @Override
+    public DonHangViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        IttemDonhangBinding binding = IttemDonhangBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new DonHangViewHolder(binding);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull DonHangViewHolder holder, int position) {
+        holder.bind(position);
+    }
+
+    @Override
+    public int getItemCount() {
+        if (lstDonHang != null){
+            return lstDonHang.size();
+        }
+        return 0;
+    }
+
+    public class DonHangViewHolder extends RecyclerView.ViewHolder {
+        private final IttemDonhangBinding binding;
+        public DonHangViewHolder(IttemDonhangBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
+        }
+
+        public void bind(int position) {
+            HistoryResponse donhang = lstDonHang.get(position);
+            binding.iddonhang.setText("Đơn hàng: "+donhang.getId());
+            binding.recycleChitiet.setLayoutManager(new LinearLayoutManager(context));
+            adapter = new ChiTietAdapter(context);
+            adapter.setData(donhang.getItems());
+            binding.recycleChitiet.setAdapter(adapter);
+            binding.recycleChitiet.setRecycledViewPool(viewPool);
+        }
+    }
+}
