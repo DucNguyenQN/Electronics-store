@@ -11,6 +11,10 @@ public class LoaiSanPham {
         this.hinhanh = hinhanh;
     }
 
+    public LoaiSanPham(String tensanpham) {
+        this.tensanpham = tensanpham;
+    }
+
     public int getId() {
         return id;
     }

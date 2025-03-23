@@ -2,6 +2,7 @@ package com.example.appbanhang.activity;
 
 import static com.example.appbanhang.activity.MainActivity.manggiohang;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,16 +17,23 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.example.appbanhang.R;
 import com.example.appbanhang.model.DataResponse;
+import com.example.appbanhang.model.GioHang;
+import com.example.appbanhang.model.RequestBody;
+import com.example.appbanhang.model.User;
 import com.example.appbanhang.retrofit.API;
 import com.example.appbanhang.retrofit.Apibanhang;
+import com.example.appbanhang.retrofit.PushNotification;
 import com.example.appbanhang.ulttil.Ultils;
 import com.google.gson.Gson;
 
 import java.text.DecimalFormat;
+import java.util.List;
 
+import io.paperdb.Paper;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -52,8 +60,8 @@ public class ThanhToanActivity extends AppCompatActivity {
     }
     private void countItem() {
         totalitem = 0;
-        for (int i = 0; i < manggiohang.size(); i++){
-            totalitem += manggiohang.get(i).getSoluongsp();
+        for (int i = 0; i < Ultils.mangmuahang.size(); i++){
+            totalitem +=  Ultils.mangmuahang.get(i).getSoluongsp();
         }
     }
     private void innitControl() {
@@ -79,11 +87,23 @@ public class ThanhToanActivity extends AppCompatActivity {
                     String str_email = Ultils.user_current.getEmail();
                     String str_sdt = Ultils.user_current.getSdt();
                     int id = Ultils.user_current.getId();
-                    Log.d("test",new Gson().toJson(manggiohang));
-                    API.apiService.createOrder(str_sdt, str_email,tongtien+"", id,edtDiaChi.getText().toString(),totalitem,new Gson().toJson(manggiohang)).enqueue(new Callback<DataResponse>() {
+                    Log.d("test",new Gson().toJson( Ultils.mangmuahang));
+                    API.apiService.createOrder(str_sdt, str_email,tongtien+"", id,edtDiaChi.getText().toString(),totalitem,new Gson().toJson( Ultils.mangmuahang)).enqueue(new Callback<DataResponse>() {
                         @Override
                         public void onResponse(Call<DataResponse> call, Response<DataResponse> response) {
+                            pushNotifictionUser();
                             Toast.makeText(ThanhToanActivity.this, "Thanh cong", Toast.LENGTH_SHORT).show();
+                            //manggiohang.remove()
+                            for (int i= 0;i < Ultils.mangmuahang.size(); i++){
+                                GioHang gio = Ultils.mangmuahang.get(i);
+                                if (manggiohang.contains(gio)){
+                                    manggiohang.remove(gio);
+                                }
+                            }
+                            Ultils.mangmuahang.clear();
+                            Paper.book().write("gio_hang", manggiohang);
+                            startActivity(new Intent(ThanhToanActivity.this, MainActivity.class));
+                            finish();
                         }
 
                         @Override
@@ -96,6 +116,40 @@ public class ThanhToanActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void pushNotifictionUser() {
+        API.apiService.gettoken(1).enqueue(new Callback<DataResponse<List<User>>>() {
+            @Override
+            public void onResponse(Call<DataResponse<List<User>>> call, Response<DataResponse<List<User>>> response) {
+                if (response.body().isSuccess() ){
+                    for (User user : response.body().getResult()){
+                        RequestBody requestBody = new RequestBody(user.getToken(), "Thong bao", "Ban co don hang moi");
+                        PushNotification.apiService.sendNotification(requestBody).enqueue(new Callback<Void>() {
+                            @Override
+                            public void onResponse(Call<Void> call, Response<Void> response) {
+                                if (response.isSuccessful()){
+                                    Toast.makeText(ThanhToanActivity.this, "Gui thong bao thanh cong", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<Void> call, Throwable t) {
+                                Toast.makeText(ThanhToanActivity.this, "Gui thong bao that bai", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<DataResponse<List<User>>> call, Throwable t) {
+
+            }
+        });
+
+    }
+
     private void innitView() {
         toolbar = findViewById(R.id.toolbarTT);
         txtTongTien  = findViewById(R.id.txtTongTien);

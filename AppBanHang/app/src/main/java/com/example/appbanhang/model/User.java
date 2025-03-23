@@ -6,6 +6,9 @@ public class User {
     private String pass;
     private String username;
     private String sdt;
+    private String uid;
+    private String token;
+    private int status;
 
     public int getId() {
         return id;
@@ -45,5 +48,29 @@ public class User {
 
     public void setSdt(String sdt) {
         this.sdt = sdt;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 }

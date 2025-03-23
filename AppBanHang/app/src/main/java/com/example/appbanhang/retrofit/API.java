@@ -46,7 +46,8 @@ public interface API {
     Call<DataResponse> dangki(@Field("email") String email,
                               @Field("pass") String pass,
                               @Field("username") String username,
-                              @Field("sdt") String sdt);
+                              @Field("sdt") String sdt,
+                              @Field("uid") String uid);
 
     @FormUrlEncoded
     @POST("dangnhap.php")
@@ -67,4 +68,13 @@ public interface API {
     @FormUrlEncoded
     @POST("xemdonhang.php")
     Call<DataResponse<List<HistoryResponse>>> xemdonhang(@Field("iduser") int iduser);
+
+    @FormUrlEncoded
+    @POST("updateToken.php")
+    Call<DataResponse> updateToken(@Field("id") int id,
+                                   @Field("token") String token);
+
+    @FormUrlEncoded
+    @POST("gettoken.php")
+    Call<DataResponse<List<User>>> gettoken(@Field("status") int status);
 }

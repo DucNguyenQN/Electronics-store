@@ -10,6 +10,7 @@ public class HistoryResponse {
     private float tongtien;
     private String sdt;
     private String email;
+    private int trangthai;
     private List<Item> item;
 
     public int getId() {
@@ -74,5 +75,13 @@ public class HistoryResponse {
 
     public void setItems(List<Item> items) {
         this.item = items;
+    }
+
+    public int getTrangthai() {
+        return trangthai;
+    }
+
+    public void setTrangthai(int trangthai) {
+        this.trangthai = trangthai;
     }
 }

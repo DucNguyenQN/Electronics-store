@@ -48,7 +48,27 @@ public class DonHangAdapter extends RecyclerView.Adapter<DonHangAdapter.DonHangV
         }
         return 0;
     }
-
+    private String TrangThai(int status){
+        String result = "";
+        switch (status){
+            case 0:
+                result = "Đơn hàng đang được xử lý";
+                break;
+            case 1:
+                result = "Đơn hàng đã được chấp nhận";
+                break;
+            case 2:
+                result = "Đơn hàng đã giao cho đơn vị vận chuyển";
+                break;
+            case 3:
+                result = "Thành công";
+                break;
+            case 4:
+                result = "Đơn hàng đã hủy";
+                break;
+        }
+        return  result;
+    }
     public class DonHangViewHolder extends RecyclerView.ViewHolder {
         private final IttemDonhangBinding binding;
         public DonHangViewHolder(IttemDonhangBinding binding) {
@@ -59,6 +79,8 @@ public class DonHangAdapter extends RecyclerView.Adapter<DonHangAdapter.DonHangV
         public void bind(int position) {
             HistoryResponse donhang = lstDonHang.get(position);
             binding.iddonhang.setText("Đơn hàng: "+donhang.getId());
+            binding.tinhtrang.setText(TrangThai(donhang.getTrangthai()));
+            binding.address.setText("Địa chỉ: "+donhang.getDiachi());
             binding.recycleChitiet.setLayoutManager(new LinearLayoutManager(context));
             adapter = new ChiTietAdapter(context);
             adapter.setData(donhang.getItems());

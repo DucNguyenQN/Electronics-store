@@ -21,6 +21,7 @@ import com.example.appbanhang.R;
 import com.example.appbanhang.adapter.GioHangAdapter;
 import com.example.appbanhang.model.EvenBus.TinhTong;
 import com.example.appbanhang.model.GioHang;
+import com.example.appbanhang.ulttil.Ultils;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -49,6 +50,9 @@ public class GioHangActivity extends AppCompatActivity {
         });
         InnitView();
         InnitControl();
+        if (Ultils.mangmuahang != null){
+            Ultils.mangmuahang.clear();
+        }
         tinhTongTien();
     }
 
@@ -84,8 +88,8 @@ public class GioHangActivity extends AppCompatActivity {
         });
     }
     private void tinhTongTien() {
-        for(int i=0;i<manggiohang.size();i++){
-            tongtien += manggiohang.get(i).getGiasp() * manggiohang.get(i).getSoluongsp();
+        for(int i=0;i< Ultils.mangmuahang.size();i++){
+            tongtien += Ultils.mangmuahang.get(i).getGiasp() * Ultils.mangmuahang.get(i).getSoluongsp();
         }
         DecimalFormat decimalFormat = new DecimalFormat("###,###,###");
         txtTongTien.setText(decimalFormat.format(tongtien)+" VND");

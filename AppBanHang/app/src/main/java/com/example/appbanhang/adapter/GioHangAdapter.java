@@ -2,12 +2,15 @@ package com.example.appbanhang.adapter;
 
 import static com.example.appbanhang.activity.MainActivity.manggiohang;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,15 +23,19 @@ import com.example.appbanhang.R;
 import com.example.appbanhang.model.EvenBus.TinhTong;
 import com.example.appbanhang.model.GioHang;
 import com.example.appbanhang.model.SanPham;
+import com.example.appbanhang.ulttil.Ultils;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.text.DecimalFormat;
 import java.util.List;
 
+import io.paperdb.Paper;
+
 public class GioHangAdapter extends RecyclerView.Adapter<GioHangAdapter.GioHangViewHolder>{
     private Context context;
     private List<GioHang> lstgiohang;
+
     public void setData(List<GioHang> lstgiohang){
         this.lstgiohang = lstgiohang;
         notifyDataSetChanged();
@@ -46,7 +53,7 @@ public class GioHangAdapter extends RecyclerView.Adapter<GioHangAdapter.GioHangV
     }
 
     @Override
-    public void onBindViewHolder(@NonNull GioHangViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull GioHangViewHolder holder, @SuppressLint("RecyclerView") int position) {
         GioHang gioHang = lstgiohang.get(position);
         holder.item_giohang_tensp.setText(gioHang.getTensp());
         DecimalFormat decimalFormat = new DecimalFormat("###,###,###");
@@ -69,7 +76,9 @@ public class GioHangAdapter extends RecyclerView.Adapter<GioHangAdapter.GioHangV
                          dialog.setPositiveButton("Đồng ý", new DialogInterface.OnClickListener() {
                              @Override
                              public void onClick(DialogInterface dialogInterface, int i) {
+                                 Ultils.mangmuahang.remove(gioHang);
                                  manggiohang.remove(pos);
+                                 Paper.book().write("gio_hang", manggiohang);
                                  notifyDataSetChanged();
                                  EventBus.getDefault().postSticky(new TinhTong());
                              }
@@ -83,7 +92,7 @@ public class GioHangAdapter extends RecyclerView.Adapter<GioHangAdapter.GioHangV
                          dialog.show();
                      }
                 }else if(giatri == 2) {
-                    if(lstgiohang.get(pos).getSoluongsp() < 11){
+                    if(lstgiohang.get(pos).getSoluongsp() < lstgiohang.get(pos).getSltonkho()){
                         int slm = lstgiohang.get(pos).getSoluongsp()+1;
                         lstgiohang.get(pos).setSoluongsp(slm);
                         holder.item_giohang_sl.setText(lstgiohang.get(pos).getSoluongsp()+"");
@@ -101,7 +110,28 @@ public class GioHangAdapter extends RecyclerView.Adapter<GioHangAdapter.GioHangV
 //                }
 //            }
 //        });
+        holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b){
+                    manggiohang.get(position).setChecked(true);
+                    if (!Ultils.mangmuahang.contains(gioHang)){
+                        Ultils.mangmuahang.add(gioHang);
+                    }
 
+                    EventBus.getDefault().postSticky(new TinhTong());
+                }else {
+                    manggiohang.get(position).setChecked(false);
+                    for (int i = 0; i <Ultils.mangmuahang.size();i++){
+                        if (Ultils.mangmuahang.get(i).getId() == gioHang.getId()){
+                            Ultils.mangmuahang.remove(i);
+                            EventBus.getDefault().postSticky(new TinhTong());
+                        }
+                    }
+                }
+            }
+        });
+        holder.checkBox.setChecked(gioHang.isChecked());
     }
 
     @Override
@@ -113,6 +143,7 @@ public class GioHangAdapter extends RecyclerView.Adapter<GioHangAdapter.GioHangV
         ImageView item_giohang_image, item_giohang_tru, item_giohang_cong;
         TextView item_giohang_tensp, item_giohang_gia, item_giohang_sl;
         ImageClickListener listener;
+        private CheckBox checkBox;
         public GioHangViewHolder(@NonNull View itemView) {
             super(itemView);
             item_giohang_tensp = itemView.findViewById(R.id.item_giohang_tensp);
@@ -121,6 +152,7 @@ public class GioHangAdapter extends RecyclerView.Adapter<GioHangAdapter.GioHangV
             item_giohang_image = itemView.findViewById(R.id.item_giohang_image);
             item_giohang_tru = itemView.findViewById(R.id.item_giohang_tru);
             item_giohang_cong = itemView.findViewById(R.id.item_giohang_cong);
+            checkBox = itemView.findViewById(R.id.item_giohang_checkbox);
 
             item_giohang_tru.setOnClickListener(this);
             item_giohang_cong.setOnClickListener(this);

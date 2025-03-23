@@ -27,6 +27,9 @@ import com.nex3z.notificationbadge.NotificationBadge;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
+
+import io.paperdb.Paper;
 
 public class ChiTietSanPham extends AppCompatActivity {
     Toolbar toolbarchitiet;
@@ -40,10 +43,8 @@ public class ChiTietSanPham extends AppCompatActivity {
     int id=0;
     Double giachitiet = (double) 0;
     String tenchitiet="";
-    //int giachitiet = 0;
     String hinhanhchitiet = "";
-    //String motachitiet="";
-    //int idsanpham = 0;
+    int slt = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +58,7 @@ public class ChiTietSanPham extends AppCompatActivity {
         AnhXa();
         ActionToolBar();
         GetInfomation();
-        CatchEventSpinner();
+        //CatchEventSpinner();
         EventButton();
     }
 
@@ -65,6 +66,7 @@ public class ChiTietSanPham extends AppCompatActivity {
         btndatmua.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Paper.book().write("gio_hang", manggiohang);
                 if(manggiohang.size() > 0){
                     boolean flag = false;
                     int sl = Integer.parseInt(spinner.getSelectedItem().toString());
@@ -73,17 +75,18 @@ public class ChiTietSanPham extends AppCompatActivity {
                             manggiohang.get(i).setSoluongsp(sl + manggiohang.get(i).getSoluongsp());
                             double gia = (giachitiet * manggiohang.get(i).getSoluongsp());
                             manggiohang.get(i).setGiasp(gia);
+                            //manggiohang.get(i).setSltonkho(slt);
                             flag = true;
                         }
                     };
                     if (flag == false){
                         double gia = sl * giachitiet;
-                        manggiohang.add(new GioHang(id, tenchitiet, gia, hinhanhchitiet, sl));
+                        manggiohang.add(new GioHang(id, tenchitiet, gia, hinhanhchitiet, sl, slt));
                     }
                 }else {
                     int soluong = Integer.parseInt(spinner.getSelectedItem().toString());
                     double GiaMoi = soluong * giachitiet;
-                    manggiohang.add(new GioHang(id, tenchitiet, GiaMoi, hinhanhchitiet, soluong));
+                    manggiohang.add(new GioHang(id, tenchitiet, GiaMoi, hinhanhchitiet, soluong, slt));
                 }
                 notificationBadge.setText(String.valueOf(manggiohang.size()));
             }
@@ -106,7 +109,15 @@ public class ChiTietSanPham extends AppCompatActivity {
         giachitiet = Double.parseDouble(sanPham.getGia());
         txtgia.setText("Giá: "+decimalFormat.format(giachitiet)+"VND");
         txtmota.setText(sanPham.getMota());
+        slt = sanPham.getSltonkho();
         Glide.with(getApplicationContext()).load(hinhanhchitiet).into(imgchitiet);
+        List<Integer> soluong = new ArrayList<>();
+        for (int i = 1;i<sanPham.getSltonkho()+1;i++){
+            soluong.add(i);
+
+        }
+        ArrayAdapter<Integer> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, soluong);
+        spinner.setAdapter(arrayAdapter);
     }
 
     private void ActionToolBar() {

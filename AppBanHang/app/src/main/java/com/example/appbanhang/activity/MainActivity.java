@@ -2,6 +2,7 @@ package com.example.appbanhang.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -9,7 +10,6 @@ import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Switch;
 import android.widget.ViewFlipper;
 
 import androidx.activity.EdgeToEdge;
@@ -21,15 +21,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.example.appbanhang.R;
 import com.example.appbanhang.adapter.LoaispAdapter;
@@ -38,20 +31,21 @@ import com.example.appbanhang.model.DataResponse;
 import com.example.appbanhang.model.GioHang;
 import com.example.appbanhang.model.LoaiSanPham;
 import com.example.appbanhang.model.SanPham;
+import com.example.appbanhang.model.User;
 import com.example.appbanhang.retrofit.API;
 import com.example.appbanhang.retrofit.Apibanhang;
 import com.example.appbanhang.ulttil.CheckConnection;
-import com.example.appbanhang.ulttil.Server;
+import com.example.appbanhang.ulttil.Ultils;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.nex3z.notificationbadge.NotificationBadge;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import io.paperdb.Paper;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -66,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     ListView lstMain;
     List<LoaiSanPham> arrayLoaisp;
     LoaispAdapter loaispAdapter;
-
+    ImageView imgSearch, imgChat;
     SanPhamAdapter spAdapter;
     FrameLayout frameLayout;
 
@@ -84,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        getToken();
         AnhXa();
         if (CheckConnection.haveNetworkConnection(getApplicationContext())){
             ActionBar();
@@ -143,9 +138,10 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case 4:
                         if(CheckConnection.haveNetworkConnection(getApplicationContext())){
-                            Intent intent = new Intent(MainActivity.this, XemDonHangActivity.class);
-
+                            Intent intent = new Intent(MainActivity.this, DangNhapActivity.class);
                             startActivity(intent);
+                            FirebaseAuth.getInstance().signOut();
+                            finish();
                         }else {
                             CheckConnection.showToast_Short(getApplicationContext(), "bạn hãy kiểm tra lại kết nối");
                         }
@@ -180,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<DataResponse<List<LoaiSanPham>>> call, Response<DataResponse<List<LoaiSanPham>>> response) {
                 if (response.body().getResult() != null){
                     arrayLoaisp = response.body().getResult();
+                    arrayLoaisp.add(new LoaiSanPham("Đăng xuất"));
                     loaispAdapter = new LoaispAdapter(getApplicationContext(), arrayLoaisp);
                     lstMain.setAdapter(loaispAdapter);
 
@@ -243,8 +240,13 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.reSanPham);
         navigationView = findViewById(R.id.navMain);
         lstMain = findViewById(R.id.lstMain);
+        imgSearch = findViewById(R.id.imgSearch);
         drawerLayout = findViewById(R.id.drawerlayout);
         badge = findViewById(R.id.menu_sl);
+        imgChat = findViewById(R.id.imgChat);
+        if (Paper.book().read("gio_hang") != null){
+            manggiohang = Paper.book().read("gio_hang");
+        }
         if (manggiohang == null){
             manggiohang = new ArrayList<>();
         }else {
@@ -268,6 +270,51 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(true);
         //Định nghĩa recycleView thành listview
         recyclerView.setLayoutManager(new GridLayoutManager(getApplicationContext(), 2));
+        imgSearch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, SearchActivity.class));
+            }
+        });
+        imgChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, ChatActivity.class));
+            }
+        });
+    }
+    private void getToken(){
+        FirebaseMessaging.getInstance().getToken()
+                .addOnSuccessListener(new OnSuccessListener<String>() {
+                    @Override
+                    public void onSuccess(String s) {
+                        if (!TextUtils.isEmpty(s)){
+                            API.apiService.updateToken(Ultils.user_current.getId(), s).enqueue(new Callback<DataResponse>() {
+                                @Override
+                                public void onResponse(Call<DataResponse> call, Response<DataResponse> response) {
+                                }
+
+                                @Override
+                                public void onFailure(Call<DataResponse> call, Throwable t) {
+
+                                }
+                            });
+                        }
+                    }
+                });
+        API.apiService.gettoken(1).enqueue(new Callback<DataResponse<List<User>>>() {
+            @Override
+            public void onResponse(Call<DataResponse<List<User>>> call, Response<DataResponse<List<User>>> response) {
+                if (response.body().isSuccess()){
+                    Ultils.ID_RECEIVE = String.valueOf(response.body().getResult().get(0).getId());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<DataResponse<List<User>>> call, Throwable t) {
+
+            }
+        });
     }
 
 }
